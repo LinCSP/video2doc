@@ -10,9 +10,7 @@ cmake -S /src -B "$BUILD_DIR" \
     -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_TOOLCHAIN_FILE=/opt/mingw-toolchain.cmake \
-    -DwxWidgets_ROOT_DIR="$WXWIN" \
-    -DwxWidgets_LIB_DIR="$WXWIN/lib" \
-    -DwxWidgets_CONFIGURATION=mswu
+    -DCMAKE_PREFIX_PATH="$WXWIN"
 
 echo "=== Build ==="
 cmake --build "$BUILD_DIR" --parallel "$(nproc)"
