@@ -27,14 +27,24 @@ Video2Doc выполняет двухэтапный pipeline:
 | Ninja | любая | Генератор сборки (рекомендуется) |
 | wxWidgets | 3.2 | GUI-фреймворк |
 
-### Внешние runtime-инструменты
+### Внешние программы (не Python)
 
-| Инструмент | Минимальная версия | Назначение |
-|------------|-------------------|------------|
-| ffmpeg | 5.0 | Извлечение кадров и аудио из видео |
-| Python | 3.10 | Runtime для скриптов транскрибации |
-| faster-whisper | последняя | Распознавание речи (устанавливается через pip) |
-| Kimi Code CLI | последняя | Генерация документации AI (устанавливается через pip) |
+| Программа | Минимальная версия | Назначение | Установка |
+|-----------|-------------------|------------|-----------|
+| **ffmpeg** | 5.0 | Извлечение кадров и аудио из видео | Системный пакет (`apt`, `pacman`, или скачать с ffmpeg.org для Windows) |
+
+### Python-зависимости
+
+Устанавливаются через `pip` из файла `requirements.txt`:
+
+```bash
+pip install -r requirements.txt
+```
+
+| Пакет | Назначение |
+|-------|-----------|
+| **faster-whisper** | Распознавание речи на базе CTranslate2 (Этап 1 — Транскрибация) |
+| **kimi-cli** | Kimi Code CLI — AI-агент для генерации документации (Этап 2) |
 
 ---
 
@@ -60,11 +70,8 @@ sudo apt-get install -y ffmpeg
 # 3. Python + pip (если ещё не установлены)
 sudo apt-get install -y python3 python3-pip
 
-# 4. faster-whisper
-pip3 install faster-whisper
-
-# 5. Kimi Code CLI
-pip3 install kimi-cli
+# 4. Python-зависимости (faster-whisper + kimi-cli)
+pip3 install -r requirements.txt
 ```
 
 #### Arch Linux
@@ -85,11 +92,8 @@ sudo pacman -S ffmpeg
 # 3. Python + pip (если ещё не установлены)
 sudo pacman -S python python-pip
 
-# 4. faster-whisper
-pip install faster-whisper --break-system-packages
-
-# 5. Kimi Code CLI
-pip install kimi-cli --break-system-packages
+# 4. Python-зависимости (faster-whisper + kimi-cli)
+pip install -r requirements.txt --break-system-packages
 ```
 
 #### Windows (MSYS2 / MinGW)
@@ -110,8 +114,8 @@ pacman -S \
 # 4. Python — установите с https://python.org/downloads/windows/
 #    (обязательно поставьте галочку "Add Python to PATH")
 
-# 5. faster-whisper и Kimi CLI
-pip install faster-whisper kimi-cli
+# 5. Python-зависимости (faster-whisper + kimi-cli)
+pip install -r requirements.txt
 ```
 
 > **Примечание:** Для Windows рекомендуется использовать готовый Docker-образ кросс-компиляции (см. раздел «Сборка в Docker»).

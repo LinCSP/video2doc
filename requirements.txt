@@ -1,0 +1,8 @@
+# Python-зависимости Video2Doc
+# Установка: pip install -r requirements.txt
+
+# Распознавание речи (Этап 1 — Транскрибация)
+faster-whisper
+
+# AI-агент для генерации документации (Этап 2)
+kimi-cli
