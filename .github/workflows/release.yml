@@ -1,0 +1,113 @@
+name: Release
+
+# Triggered by a version tag: v0.1.0, v1.2.3, etc.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+*'
+
+jobs:
+  linux:
+    name: Linux (Ubuntu, x86_64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake ninja-build \
+            libwxgtk3.2-dev libgtk-3-dev
+
+      - name: Configure
+        run: cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: ninja -C build
+
+      - name: Package tar.gz
+        run: |
+          mkdir -p "Video2Doc-${{ github.ref_name }}-linux-x64"
+          cp build/bin/Video2Doc "Video2Doc-${{ github.ref_name }}-linux-x64/"
+          cp requirements.txt install-deps.sh "Video2Doc-${{ github.ref_name }}-linux-x64/"
+          tar czf "Video2Doc-${{ github.ref_name }}-linux-x64.tar.gz" \
+            "Video2Doc-${{ github.ref_name }}-linux-x64"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          path: Video2Doc-*.tar.gz
+          if-no-files-found: error
+
+  windows:
+    name: Windows (MinGW cross-compile, x64 zip)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Windows binary via Docker
+        run: |
+          cd docker
+          ./build-win.sh "${{ github.workspace }}"
+
+      - name: Rename artifact with version
+        run: |
+          cd docker/output
+          for f in Video2Doc-win64-*.zip; do
+            mv "$f" "Video2Doc-${{ github.ref_name }}-win64.zip"
+          done
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: docker/output/Video2Doc-*.zip
+          if-no-files-found: error
+
+  publish:
+    name: Publish Release
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.ref_name }}"
+
+          # Delete existing release/tag if left from a failed previous run
+          gh release delete "$TAG" --yes 2>/dev/null || true
+
+          # Collect artifacts
+          FILES=()
+          for f in dist/*.tar.gz dist/*.zip; do
+            [ -f "$f" ] && FILES+=("$f")
+          done
+          echo "Uploading: ${FILES[*]}"
+
+          # Mark as prerelease if tag contains a/b/rc
+          PRERELEASE_FLAG=""
+          if echo "$TAG" | grep -qE '[0-9](a|b|rc)[0-9]'; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create "$TAG" \
+            --title "Video2Doc $TAG" \
+            --generate-notes \
+            $PRERELEASE_FLAG \
+            "${FILES[@]}"
