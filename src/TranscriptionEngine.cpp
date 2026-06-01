@@ -187,10 +187,15 @@ void TranscriptionEngine::RunWhisper() {
         }
     }
 
-    // python3 -u  → unbuffered stdout/stderr
+    // python3 (Linux) / python (Windows) — unbuffered stdout/stderr
+#ifdef __WXMSW__
+    wxString pythonCmd = wxT("python");
+#else
+    wxString pythonCmd = wxT("python3");
+#endif
     wxString cmd = wxString::Format(
-        wxT("python3 -u \"%s\" \"%s\" \"%s\" %s"),
-        scriptPath, m_videoPath, m_outDir, duration);
+        wxT("%s -u \"%s\" \"%s\" \"%s\" %s"),
+        pythonCmd, scriptPath, m_videoPath, m_outDir, duration);
 
     AppendLog(wxT("> ") + cmd + wxT("\n"));
 
