@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Video2Doc
+Comment=Generate documentation from video using AI
+Exec=Video2Doc
+Type=Application
+Categories=AudioVideo;Utility;
+Terminal=false
