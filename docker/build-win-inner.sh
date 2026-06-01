@@ -32,6 +32,7 @@ for dll in libgcc_s_seh-1 libstdc++-6 libwinpthread-1; do
 done
 
 echo "=== Archive ==="
+mkdir -p /out
 ARCHIVE="/out/Video2Doc-win64-$(date +%Y%m%d-%H%M).zip"
 cd "$DIST_DIR" && zip -r "$ARCHIVE" .
 echo "Done: $ARCHIVE  ($(du -sh "$ARCHIVE" | cut -f1))"
