@@ -31,6 +31,7 @@ set(SOURCES
     src/DocGenerator.cpp
     src/ConfigManager.cpp
     src/PathValidator.cpp
+    src/DependencyChecker.cpp
 )
 
 set(HEADERS
@@ -44,6 +45,7 @@ set(HEADERS
     src/DocGenerator.h
     src/ConfigManager.h
     src/PathValidator.h
+    src/DependencyChecker.h
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})

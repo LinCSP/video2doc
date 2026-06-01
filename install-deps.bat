@@ -11,8 +11,20 @@ set "SCRIPT_DIR=%~dp0"
 set "REQ_FILE=%SCRIPT_DIR%requirements.txt"
 set "MISSING=0"
 
+REM --- Проверка git ---
+echo [1/5] Проверка git...
+git --version >nul 2>&1
+if errorlevel 1 (
+    echo   ⚠ git НЕ НАЙДЕН (необязательно)
+    echo   git нужен только для клонирования репозиториев.
+    echo   Скачайте с https://git-scm.com/download/win если нужен.
+) else (
+    for /f "tokens=*" %%a in ('git --version 2^>^&1') do echo   ✓ %%a
+)
+echo.
+
 REM --- Проверка Python ---
-echo [1/4] Проверка Python...
+echo [2/5] Проверка Python...
 python --version >nul 2>&1
 if errorlevel 1 (
     echo   ✗ Python НЕ НАЙДЕН
@@ -29,7 +41,7 @@ if errorlevel 1 (
 )
 
 REM --- Проверка pip ---
-echo [2/4] Проверка pip...
+echo [3/5] Проверка pip...
 pip --version >nul 2>&1
 if errorlevel 1 (
     echo   ✗ pip НЕ НАЙДЕН
@@ -40,7 +52,7 @@ if errorlevel 1 (
 )
 
 REM --- Проверка ffmpeg ---
-echo [3/4] Проверка ffmpeg...
+echo [4/5] Проверка ffmpeg...
 ffmpeg -version >nul 2>&1
 if errorlevel 1 (
     echo   ✗ ffmpeg НЕ НАЙДЕН
@@ -72,7 +84,7 @@ if "%MISSING%"=="1" (
 )
 
 REM --- Установка Python-пакетов ---
-echo [4/4] Установка Python-пакетов (faster-whisper, kimi-cli)...
+echo [5/5] Установка Python-пакетов (faster-whisper, kimi-cli)...
 if exist "%REQ_FILE%" (
     pip install -r "%REQ_FILE%"
 ) else (

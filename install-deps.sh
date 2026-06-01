@@ -121,6 +121,7 @@ check_cmd() {
 }
 
 OK=0
+check_cmd git || true  # git необязательный
 check_cmd cmake || OK=1
 check_cmd ninja || OK=1
 check_cmd wx-config || check_cmd wx-config-gtk3 || OK=1

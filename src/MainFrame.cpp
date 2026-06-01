@@ -7,6 +7,7 @@
 #include "DocGenerator.h"
 #include "ConfigManager.h"
 #include "PathValidator.h"
+#include "DependencyChecker.h"
 
 #include <wx/sizer.h>
 #include <wx/msgdlg.h>
@@ -41,6 +42,11 @@ MainFrame::MainFrame(const wxString& title)
 
     LoadSettings();
     UpdateUIState();
+
+    // Проверка зависимостей при старте (с небольшой задержкой, чтобы окно отрисовалось)
+    CallAfter([this]() {
+        ShowDependencyCheckDialog(this);
+    });
 
     Bind(wxEVT_CLOSE_WINDOW, &MainFrame::OnClose, this);
 }
