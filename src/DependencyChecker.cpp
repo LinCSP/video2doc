@@ -45,10 +45,11 @@ bool DependencyChecker::CheckCommand(const wxString& cmd, wxString* version) {
 
 static wxString GetPythonCmd() {
     wxProcess p(wxPROCESS_REDIRECT);
-    if (wxExecute(wxT("python3 --version"), wxEXEC_SYNC, &p) != -1) {
-        return wxT("python3");
+    // Prefer "python" (Windows, Arch) over "python3" (Ubuntu)
+    if (wxExecute(wxT("python --version"), wxEXEC_SYNC, &p) != -1) {
+        return wxT("python");
     }
-    return wxT("python");
+    return wxT("python3");
 }
 
 bool DependencyChecker::CheckPythonModule(const wxString& module) {
