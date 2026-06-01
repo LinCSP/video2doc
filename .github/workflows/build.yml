@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  linux:
+  linux-ubuntu:
     name: Linux (Ubuntu, x86_64)
     runs-on: ubuntu-latest
 
@@ -31,7 +31,86 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: Video2Doc-linux
+          name: Video2Doc-linux-ubuntu
+          path: build/bin/Video2Doc
+          if-no-files-found: error
+
+  linux-arch:
+    name: Linux (Arch, x86_64)
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --user root
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm \
+            base-devel cmake ninja \
+            wxwidgets-gtk3 gtk3 glib2
+
+      - name: Build
+        run: |
+          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
+          ninja -C build
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: Video2Doc-linux-arch
+          path: build/bin/Video2Doc
+          if-no-files-found: error
+
+  linux-fedora:
+    name: Linux (Fedora, x86_64)
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+      options: --user root
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          dnf install -y \
+            cmake ninja-build gcc-c++ git \
+            wxGTK-devel gtk3-devel glib2-devel
+
+      - name: Build
+        run: |
+          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
+          ninja -C build
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: Video2Doc-linux-fedora
+          path: build/bin/Video2Doc
+          if-no-files-found: error
+
+  macos:
+    name: macOS (arm64)
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install cmake ninja wxwidgets
+
+      - name: Build
+        run: |
+          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release
+          ninja -C build
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: Video2Doc-macos-arm64
           path: build/bin/Video2Doc
           if-no-files-found: error
 
