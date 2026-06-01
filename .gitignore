@@ -232,3 +232,4 @@ models/*
 !models/.gitkeep
 !models/README.md
 
+docker/output/

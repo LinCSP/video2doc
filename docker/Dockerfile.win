@@ -1,0 +1,64 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Кросс-компилятор MinGW + инструменты
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        gcc-mingw-w64-x86-64 \
+        g++-mingw-w64-x86-64 \
+        cmake \
+        ninja-build \
+        git \
+        wget \
+        unzip \
+        curl \
+        ca-certificates \
+        pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Скачиваем и собираем wxWidgets под MinGW (статическая линковка — проще дистрибуция)
+ENV WX_VERSION=3.2.6
+RUN wget -q "https://github.com/wxWidgets/wxWidgets/releases/download/v${WX_VERSION}/wxWidgets-${WX_VERSION}.tar.bz2" \
+        -O /tmp/wxwidgets.tar.bz2 \
+    && tar -xjf /tmp/wxwidgets.tar.bz2 -C /tmp \
+    && rm /tmp/wxwidgets.tar.bz2
+
+# Toolchain для кросс-компиляции Linux → Windows MinGW
+RUN cat > /opt/mingw-toolchain.cmake <<'EOF'
+set(CMAKE_SYSTEM_NAME Windows)
+set(CMAKE_SYSTEM_PROCESSOR x86_64)
+
+set(MINGW_PREFIX x86_64-w64-mingw32)
+find_program(CMAKE_C_COMPILER   NAMES ${MINGW_PREFIX}-gcc   REQUIRED)
+find_program(CMAKE_CXX_COMPILER NAMES ${MINGW_PREFIX}-g++   REQUIRED)
+find_program(CMAKE_RC_COMPILER  NAMES ${MINGW_PREFIX}-windres REQUIRED)
+
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+EOF
+
+# Собираем wxWidgets статически под MinGW
+RUN cmake -S /tmp/wxWidgets-${WX_VERSION} -B /tmp/wx-build \
+        -G Ninja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_TOOLCHAIN_FILE=/opt/mingw-toolchain.cmake \
+        -DCMAKE_INSTALL_PREFIX=/opt/wxwidgets-mingw \
+        -DwxBUILD_SHARED=OFF \
+        -DwxUSE_WEBVIEW=OFF \
+        -DwxUSE_STC=OFF \
+    && cmake --build /tmp/wx-build --parallel $(nproc) \
+    && cmake --install /tmp/wx-build \
+    && rm -rf /tmp/wx-build /tmp/wxWidgets-${WX_VERSION}
+
+ENV WXWIN=/opt/wxwidgets-mingw
+
+COPY build-win-inner.sh /build-win-inner.sh
+RUN chmod +x /build-win-inner.sh
+
+VOLUME ["/src", "/out"]
+WORKDIR /src
+
+ENTRYPOINT ["/build-win-inner.sh"]

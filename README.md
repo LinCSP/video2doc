@@ -46,6 +46,8 @@ kimi --version
 
 ## Сборка
 
+### Локальная сборка
+
 ```bash
 # Из корня репозитория
 mkdir build && cd build
@@ -56,16 +58,44 @@ ninja
 ./bin/Video2Doc
 ```
 
-### Debug-сборка
+#### Debug-сборка
 ```bash
 cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Debug
 ninja
 ```
 
-### Установка
+#### Установка
 ```bash
 ninja install  # INSTALL_PREFIX по умолчанию /usr/local
 ```
+
+### Сборка в Docker
+
+В каталоге `docker/` подготовлены образы для кросс-платформенной сборки.
+
+#### Linux (из публичного репозитория)
+```bash
+cd docker
+docker build -t video2doc .
+docker run --rm --name video2doc-build video2doc
+# Бинарник внутри контейнера: /devel/video2doc-build/bin/Video2Doc
+```
+
+#### Linux (из локальных исходников)
+```bash
+cd docker
+./run.sh
+# Результат в docker/output/
+```
+
+#### Windows (кросс-компиляция MinGW)
+```bash
+cd docker
+./build-win.sh
+# Результат: docker/output/Video2Doc-win64-YYYYMMDD-HHMM.zip
+```
+
+Подробности — в `docker/README_DOCKER.md`.
 
 ## Использование
 
