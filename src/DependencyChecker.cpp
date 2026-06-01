@@ -7,12 +7,12 @@
 #include <algorithm>
 
 bool DependencyChecker::CheckCommand(const wxString& cmd, wxString* version) {
-    wxString fullCmd = cmd + wxT(" --version 2>&1");
+    wxString fullCmd = cmd + wxT(" --version");
     
     wxProcess process(wxPROCESS_REDIRECT);
-    long pid = wxExecute(fullCmd, wxEXEC_SYNC, &process);
+    long exitCode = wxExecute(fullCmd, wxEXEC_SYNC, &process);
     
-    if (pid == 0 || pid == -1) {
+    if (exitCode == -1) {
         return false;
     }
     
@@ -36,12 +36,12 @@ bool DependencyChecker::CheckCommand(const wxString& cmd, wxString* version) {
 }
 
 bool DependencyChecker::CheckPythonModule(const wxString& module) {
-    wxString cmd = wxT("python3 -c \"import ") + module + wxT("; print('OK')\" 2>&1");
+    wxString cmd = wxT("python3 -c \"import ") + module + wxT("; print('OK')\"");
     
     wxProcess process(wxPROCESS_REDIRECT);
-    long pid = wxExecute(cmd, wxEXEC_SYNC, &process);
+    long exitCode = wxExecute(cmd, wxEXEC_SYNC, &process);
     
-    if (pid == 0 || pid == -1) {
+    if (exitCode == -1) {
         return false;
     }
     
@@ -57,10 +57,10 @@ bool DependencyChecker::CheckPythonModule(const wxString& module) {
 }
 
 static bool TryInstallPythonModule(const wxString& module, wxString* output) {
-    wxString cmd = wxT("python3 -m pip install ") + module + wxT(" --user 2>&1");
+    wxString cmd = wxT("python3 -m pip install ") + module + wxT(" --user");
     
     wxProcess process(wxPROCESS_REDIRECT);
-    long pid = wxExecute(cmd, wxEXEC_SYNC, &process);
+    long exitCode = wxExecute(cmd, wxEXEC_SYNC, &process);
     
     if (output) {
         wxInputStream* stream = process.GetInputStream();
@@ -71,7 +71,7 @@ static bool TryInstallPythonModule(const wxString& module, wxString* output) {
         }
     }
     
-    if (pid == 0 || pid == -1) {
+    if (exitCode == -1) {
         return false;
     }
     
@@ -80,10 +80,10 @@ static bool TryInstallPythonModule(const wxString& module, wxString* output) {
 }
 
 static bool TryInstallPythonModuleFallback(const wxString& module, wxString* output) {
-    wxString cmd = wxT("pip3 install ") + module + wxT(" 2>&1");
+    wxString cmd = wxT("pip3 install ") + module;
     
     wxProcess process(wxPROCESS_REDIRECT);
-    long pid = wxExecute(cmd, wxEXEC_SYNC, &process);
+    long exitCode = wxExecute(cmd, wxEXEC_SYNC, &process);
     
     if (output) {
         wxInputStream* stream = process.GetInputStream();
@@ -94,7 +94,7 @@ static bool TryInstallPythonModuleFallback(const wxString& module, wxString* out
         }
     }
     
-    if (pid == 0 || pid == -1) {
+    if (exitCode == -1) {
         return false;
     }
     
