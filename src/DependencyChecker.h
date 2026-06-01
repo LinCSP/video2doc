@@ -2,6 +2,7 @@
 
 #include <wx/string.h>
 #include <wx/window.h>
+#include <wx/textctrl.h>
 #include <vector>
 
 struct DependencyInfo {
@@ -16,11 +17,12 @@ struct DependencyInfo {
 
 class DependencyChecker {
 public:
-    static std::vector<DependencyInfo> CheckAll();
+    static std::vector<DependencyInfo> CheckAll(wxTextCtrl* log = nullptr);
     static bool CheckCommand(const wxString& cmd, wxString* version = nullptr);
     static bool CheckPythonModule(const wxString& module);
 };
 
 // Показывает диалог проверки зависимостей; при отсутствии Python-модулей
 // пытается установить их автоматически через pip.
-void ShowDependencyCheckDialog(wxWindow* parent = nullptr);
+// Вывод пишется в log (если передан) для отображения в журнале.
+void ShowDependencyCheckDialog(wxWindow* parent = nullptr, wxTextCtrl* log = nullptr);

@@ -45,7 +45,7 @@ MainFrame::MainFrame(const wxString& title)
 
     // Проверка зависимостей при старте (с небольшой задержкой, чтобы окно отрисовалось)
     CallAfter([this]() {
-        ShowDependencyCheckDialog(this);
+        ShowDependencyCheckDialog(this, m_controlPanel->GetLogCtrl());
     });
 
     Bind(wxEVT_CLOSE_WINDOW, &MainFrame::OnClose, this);

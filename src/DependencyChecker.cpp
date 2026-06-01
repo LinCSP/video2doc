@@ -1,10 +1,19 @@
 #include "DependencyChecker.h"
+#include "ControlLogPanel.h"
 #include <wx/process.h>
 #include <wx/txtstrm.h>
 #include <wx/msgdlg.h>
 #include <wx/utils.h>
 #include <wx/app.h>
 #include <algorithm>
+
+static void Log(wxTextCtrl* log, const wxString& text) {
+    if (log) {
+        log->AppendText(text + wxT("\n"));
+        log->ShowPosition(log->GetLastPosition());
+        wxYieldIfNeeded();
+    }
+}
 
 bool DependencyChecker::CheckCommand(const wxString& cmd, wxString* version) {
     wxString fullCmd = cmd + wxT(" --version");
@@ -23,7 +32,6 @@ bool DependencyChecker::CheckCommand(const wxString& cmd, wxString* version) {
             stream->Read(buf, sizeof(buf));
             wxString text(buf, wxConvUTF8, stream->LastRead());
             text.Trim(true).Trim(false);
-            // Take first line only
             int pos = text.Find(wxT('\n'));
             if (pos != wxNOT_FOUND) {
                 text = text.Left(pos);
@@ -56,8 +64,10 @@ bool DependencyChecker::CheckPythonModule(const wxString& module) {
     return false;
 }
 
-static bool TryInstallPythonModule(const wxString& module, wxString* output) {
+static bool TryInstallPythonModule(const wxString& module, wxString* output, wxTextCtrl* log) {
     wxString cmd = wxT("python3 -m pip install ") + module + wxT(" --user");
+    
+    Log(log, wxT("⏳ Установка ") + module + wxT(" (python3 -m pip install --user)..."));
     
     wxProcess process(wxPROCESS_REDIRECT);
     long exitCode = wxExecute(cmd, wxEXEC_SYNC, &process);
@@ -65,22 +75,31 @@ static bool TryInstallPythonModule(const wxString& module, wxString* output) {
     if (output) {
         wxInputStream* stream = process.GetInputStream();
         if (stream && stream->CanRead()) {
-            char buf[1024];
+            char buf[4096];
             stream->Read(buf, sizeof(buf));
             *output = wxString(buf, wxConvUTF8, stream->LastRead());
         }
     }
     
     if (exitCode == -1) {
+        Log(log, wxT("  ✗ Не удалось запустить pip"));
         return false;
     }
     
     // Check if import works now
-    return DependencyChecker::CheckPythonModule(module);
+    bool ok = DependencyChecker::CheckPythonModule(module);
+    if (ok) {
+        Log(log, wxT("  ✓ ") + module + wxT(" установлен"));
+    } else {
+        Log(log, wxT("  ✗ ") + module + wxT(" не установлен"));
+    }
+    return ok;
 }
 
-static bool TryInstallPythonModuleFallback(const wxString& module, wxString* output) {
+static bool TryInstallPythonModuleFallback(const wxString& module, wxString* output, wxTextCtrl* log) {
     wxString cmd = wxT("pip install ") + module;
+    
+    Log(log, wxT("⏳ Повторная попытка: pip install ") + module + wxT("..."));
     
     wxProcess process(wxPROCESS_REDIRECT);
     long exitCode = wxExecute(cmd, wxEXEC_SYNC, &process);
@@ -88,21 +107,30 @@ static bool TryInstallPythonModuleFallback(const wxString& module, wxString* out
     if (output) {
         wxInputStream* stream = process.GetInputStream();
         if (stream && stream->CanRead()) {
-            char buf[1024];
+            char buf[4096];
             stream->Read(buf, sizeof(buf));
             *output = wxString(buf, wxConvUTF8, stream->LastRead());
         }
     }
     
     if (exitCode == -1) {
+        Log(log, wxT("  ✗ Не удалось запустить pip"));
         return false;
     }
     
-    return DependencyChecker::CheckPythonModule(module);
+    bool ok = DependencyChecker::CheckPythonModule(module);
+    if (ok) {
+        Log(log, wxT("  ✓ ") + module + wxT(" установлен"));
+    } else {
+        Log(log, wxT("  ✗ ") + module + wxT(" не установлен"));
+    }
+    return ok;
 }
 
-std::vector<DependencyInfo> DependencyChecker::CheckAll() {
+std::vector<DependencyInfo> DependencyChecker::CheckAll(wxTextCtrl* log) {
     std::vector<DependencyInfo> deps;
+    
+    Log(log, wxT("=== Проверка зависимостей Video2Doc ==="));
     
     // System dependencies
     deps.push_back({wxT("git"), wxT("git"), wxT("Клонирование репозиториев (необязательно)"), false, false, wxT(""), wxT("sudo apt install git")});
@@ -122,6 +150,11 @@ std::vector<DependencyInfo> DependencyChecker::CheckAll() {
             wxString version;
             dep.found = CheckCommand(dep.command, &version);
             dep.version = version;
+            if (dep.found) {
+                Log(log, wxT("✓ ") + dep.name + wxT(" — ") + version);
+            } else {
+                Log(log, wxT("✗ ") + dep.name + wxT(" — ") + dep.purpose);
+            }
         }
     }
     
@@ -129,11 +162,14 @@ std::vector<DependencyInfo> DependencyChecker::CheckAll() {
     for (auto& dep : deps) {
         if (dep.command == wxT("faster_whisper")) {
             dep.found = CheckPythonModule(wxT("faster_whisper"));
-            if (!dep.found) {
+            if (dep.found) {
+                Log(log, wxT("✓ faster-whisper"));
+            } else {
+                Log(log, wxT("✗ faster-whisper — попытка автоматической установки..."));
                 wxString output;
-                dep.found = TryInstallPythonModule(wxT("faster-whisper"), &output);
+                dep.found = TryInstallPythonModule(wxT("faster-whisper"), &output, log);
                 if (!dep.found) {
-                    dep.found = TryInstallPythonModuleFallback(wxT("faster-whisper"), &output);
+                    dep.found = TryInstallPythonModuleFallback(wxT("faster-whisper"), &output, log);
                 }
                 if (dep.found) {
                     dep.version = wxT("(установлен автоматически)");
@@ -141,32 +177,34 @@ std::vector<DependencyInfo> DependencyChecker::CheckAll() {
             }
         }
         else if (dep.command == wxT("kimi")) {
-            // kimi-cli may install as 'kimi' command, not Python module
             wxString version;
             dep.found = CheckCommand(wxT("kimi"), &version);
             if (!dep.found) {
                 dep.found = CheckPythonModule(wxT("kimi"));
             }
-            if (!dep.found) {
+            if (dep.found) {
+                dep.version = version.IsEmpty() ? wxT("(OK)") : version;
+                Log(log, wxT("✓ kimi-cli"));
+            } else {
+                Log(log, wxT("✗ kimi-cli — попытка автоматической установки..."));
                 wxString output;
-                dep.found = TryInstallPythonModule(wxT("kimi-cli"), &output);
+                dep.found = TryInstallPythonModule(wxT("kimi-cli"), &output, log);
                 if (!dep.found) {
-                    dep.found = TryInstallPythonModuleFallback(wxT("kimi-cli"), &output);
+                    dep.found = TryInstallPythonModuleFallback(wxT("kimi-cli"), &output, log);
                 }
                 if (dep.found) {
                     dep.version = wxT("(установлен автоматически)");
                 }
-            } else {
-                dep.version = version;
             }
         }
     }
     
+    Log(log, wxT("=== Проверка зависимостей завершена ==="));
     return deps;
 }
 
-void ShowDependencyCheckDialog(wxWindow* parent) {
-    auto deps = DependencyChecker::CheckAll();
+void ShowDependencyCheckDialog(wxWindow* parent, wxTextCtrl* log) {
+    auto deps = DependencyChecker::CheckAll(log);
     
     wxString msg = wxT("Проверка зависимостей Video2Doc\n\n");
     wxString missingRequired;
