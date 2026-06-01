@@ -2,6 +2,24 @@
 
 Графическое приложение на wxWidgets для автоматической генерации документации из видеофайлов с помощью AI.
 
+## Быстрый старт
+
+```bash
+# 1. Клонируйте репозиторий
+git clone https://github.com/LinCSP/video2doc.git
+cd video2doc
+
+# 2. Установите все зависимости одной командой (Linux)
+./install-deps.sh
+
+# 3. Соберите проект
+mkdir build && cd build
+cmake .. -G Ninja && ninja
+./bin/Video2Doc
+```
+
+> **Windows?** Запустите `install-deps.bat` двойным кликом — он проверит Python, ffmpeg, pip и установит нужные пакеты.
+
 ## Что делает
 
 Video2Doc выполняет двухэтапный pipeline:
