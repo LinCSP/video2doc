@@ -1,5 +1,7 @@
 # Video2Doc
 
+[![Build](https://github.com/LinCSP/video2doc/actions/workflows/build.yml/badge.svg)](https://github.com/LinCSP/video2doc/actions/workflows/build.yml)
+
 Графическое приложение на wxWidgets для автоматической генерации документации из видеофайлов с помощью AI.
 
 ## Быстрый старт
