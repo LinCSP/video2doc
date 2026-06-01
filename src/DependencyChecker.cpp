@@ -43,8 +43,17 @@ bool DependencyChecker::CheckCommand(const wxString& cmd, wxString* version) {
     return true;
 }
 
+static wxString GetPythonCmd() {
+    wxProcess p(wxPROCESS_REDIRECT);
+    if (wxExecute(wxT("python3 --version"), wxEXEC_SYNC, &p) != -1) {
+        return wxT("python3");
+    }
+    return wxT("python");
+}
+
 bool DependencyChecker::CheckPythonModule(const wxString& module) {
-    wxString cmd = wxT("python3 -c \"import ") + module + wxT("; print('OK')\"");
+    wxString py = GetPythonCmd();
+    wxString cmd = py + wxT(" -c \"import ") + module + wxT("; print('OK')\"");
     
     wxProcess process(wxPROCESS_REDIRECT);
     long exitCode = wxExecute(cmd, wxEXEC_SYNC, &process);
@@ -65,9 +74,10 @@ bool DependencyChecker::CheckPythonModule(const wxString& module) {
 }
 
 static bool TryInstallPythonModule(const wxString& module, wxString* output, wxTextCtrl* log) {
-    wxString cmd = wxT("python3 -m pip install ") + module + wxT(" --user");
+    wxString py = GetPythonCmd();
+    wxString cmd = py + wxT(" -m pip install ") + module + wxT(" --user");
     
-    Log(log, wxT("⏳ Установка ") + module + wxT(" (python3 -m pip install --user)..."));
+    Log(log, wxT("⏳ Установка ") + module + wxT(" (") + py + wxT(" -m pip install --user)..."));
     
     wxProcess process(wxPROCESS_REDIRECT);
     long exitCode = wxExecute(cmd, wxEXEC_SYNC, &process);
@@ -135,7 +145,9 @@ std::vector<DependencyInfo> DependencyChecker::CheckAll(wxTextCtrl* log) {
     // System dependencies
     deps.push_back({wxT("git"), wxT("git"), wxT("Клонирование репозиториев (необязательно)"), false, false, wxT(""), wxT("sudo apt install git")});
     deps.push_back({wxT("ffmpeg"), wxT("ffmpeg"), wxT("Извлечение кадров и аудио (Этап 1)"), true, false, wxT(""), wxT("sudo apt install ffmpeg")});
-    deps.push_back({wxT("Python 3"), wxT("python3"), wxT("Запуск скриптов транскрибации (Этап 1)"), true, false, wxT(""), wxT("sudo apt install python3 python3-pip")});
+    // Python: на Windows python3 не существует, проверяем python как fallback
+    bool pythonFound = CheckCommand(wxT("python3")) || CheckCommand(wxT("python"));
+    deps.push_back({wxT("Python 3"), GetPythonCmd(), wxT("Запуск скриптов транскрибации (Этап 1)"), true, pythonFound, wxT(""), wxT("sudo apt install python3 python3-pip  (Windows: скачать с python.org)")});
     // pip: на Arch pip3 может не существовать, проверяем pip как fallback
     bool pipFound = CheckCommand(wxT("pip3")) || CheckCommand(wxT("pip"));
     deps.push_back({wxT("pip"), wxT("pip"), wxT("Установка Python-пакетов"), true, pipFound, wxT(""), wxT("sudo apt install python3-pip  (Arch: sudo pacman -S python-pip)")});
