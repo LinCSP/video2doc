@@ -80,7 +80,7 @@ static bool TryInstallPythonModule(const wxString& module, wxString* output) {
 }
 
 static bool TryInstallPythonModuleFallback(const wxString& module, wxString* output) {
-    wxString cmd = wxT("pip3 install ") + module;
+    wxString cmd = wxT("pip install ") + module;
     
     wxProcess process(wxPROCESS_REDIRECT);
     long exitCode = wxExecute(cmd, wxEXEC_SYNC, &process);
@@ -108,7 +108,9 @@ std::vector<DependencyInfo> DependencyChecker::CheckAll() {
     deps.push_back({wxT("git"), wxT("git"), wxT("Клонирование репозиториев (необязательно)"), false, false, wxT(""), wxT("sudo apt install git")});
     deps.push_back({wxT("ffmpeg"), wxT("ffmpeg"), wxT("Извлечение кадров и аудио (Этап 1)"), true, false, wxT(""), wxT("sudo apt install ffmpeg")});
     deps.push_back({wxT("Python 3"), wxT("python3"), wxT("Запуск скриптов транскрибации (Этап 1)"), true, false, wxT(""), wxT("sudo apt install python3 python3-pip")});
-    deps.push_back({wxT("pip3"), wxT("pip3"), wxT("Установка Python-пакетов"), true, false, wxT(""), wxT("sudo apt install python3-pip")});
+    // pip: на Arch pip3 может не существовать, проверяем pip как fallback
+    bool pipFound = CheckCommand(wxT("pip3")) || CheckCommand(wxT("pip"));
+    deps.push_back({wxT("pip"), wxT("pip"), wxT("Установка Python-пакетов"), true, pipFound, wxT(""), wxT("sudo apt install python3-pip  (Arch: sudo pacman -S python-pip)")});
     
     // Python modules
     deps.push_back({wxT("faster-whisper"), wxT("faster_whisper"), wxT("Распознавание речи (Этап 1)"), true, false, wxT(""), wxT("pip3 install faster-whisper")});
