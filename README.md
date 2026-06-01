@@ -18,21 +18,111 @@ Video2Doc выполняет двухэтапный pipeline:
 
 ## Зависимости
 
-### Системные
-- **C++20 компилятор** (GCC 16+, Clang 18+, MSVC 2022+)
-- **CMake** ≥ 3.16
-- **wxWidgets** ≥ 3.2 (GTK3-бэкенд на Linux)
-- **Ninja** или Make
+### Системные зависимости сборки
 
-### Внешние инструменты
-- **ffmpeg** ≥ 5.0 — извлечение кадров и аудио
-- **Python** ≥ 3.10 + `faster-whisper` — транскрибация речи
-- **Kimi Code CLI** — генерация документации (`pip install kimi-cli`)
+| Компонент | Минимальная версия | Назначение |
+|-----------|-------------------|------------|
+| GCC / Clang / MSVC | C++20 support | Компилятор |
+| CMake | 3.16 | Система сборки |
+| Ninja | любая | Генератор сборки (рекомендуется) |
+| wxWidgets | 3.2 | GUI-фреймворк |
+
+### Внешние runtime-инструменты
+
+| Инструмент | Минимальная версия | Назначение |
+|------------|-------------------|------------|
+| ffmpeg | 5.0 | Извлечение кадров и аудио из видео |
+| Python | 3.10 | Runtime для скриптов транскрибации |
+| faster-whisper | последняя | Распознавание речи (устанавливается через pip) |
+| Kimi Code CLI | последняя | Генерация документации AI (устанавливается через pip) |
+
+---
+
+### Установка зависимостей
+
+#### Ubuntu / Debian
+
+```bash
+# 1. Системные зависимости сборки
+sudo apt-get update
+sudo apt-get install -y \
+    build-essential \
+    cmake \
+    ninja-build \
+    libwxgtk3.2-dev \
+    libwxgtk-webview3.2-dev \
+    libgtk-3-dev \
+    libglib2.0-dev
+
+# 2. ffmpeg
+sudo apt-get install -y ffmpeg
+
+# 3. Python + pip (если ещё не установлены)
+sudo apt-get install -y python3 python3-pip
+
+# 4. faster-whisper
+pip3 install faster-whisper
+
+# 5. Kimi Code CLI
+pip3 install kimi-cli
+```
+
+#### Arch Linux
+
+```bash
+# 1. Системные зависимости сборки
+sudo pacman -S \
+    base-devel \
+    cmake \
+    ninja \
+    wxwidgets-gtk3 \
+    gtk3 \
+    glib2
+
+# 2. ffmpeg
+sudo pacman -S ffmpeg
+
+# 3. Python + pip (если ещё не установлены)
+sudo pacman -S python python-pip
+
+# 4. faster-whisper
+pip install faster-whisper --break-system-packages
+
+# 5. Kimi Code CLI
+pip install kimi-cli --break-system-packages
+```
+
+#### Windows (MSYS2 / MinGW)
+
+```bash
+# 1. Установите MSYS2: https://www.msys2.org/
+
+# 2. В MSYS2 UCRT64 терминале:
+pacman -S \
+    mingw-w64-ucrt-x86_64-gcc \
+    mingw-w64-ucrt-x86_64-cmake \
+    mingw-w64-ucrt-x86_64-ninja \
+    mingw-w64-ucrt-x86_64-wxwidgets3.2-msw
+
+# 3. ffmpeg — скачайте с https://ffmpeg.org/download.html#build-windows
+#    и добавьте bin/ в PATH
+
+# 4. Python — установите с https://python.org/downloads/windows/
+#    (обязательно поставьте галочку "Add Python to PATH")
+
+# 5. faster-whisper и Kimi CLI
+pip install faster-whisper kimi-cli
+```
+
+> **Примечание:** Для Windows рекомендуется использовать готовый Docker-образ кросс-компиляции (см. раздел «Сборка в Docker»).
+
+---
 
 ### Проверка зависимостей
+
 ```bash
-# wxWidgets
-cmake --find-package -DNAME=wxWidgets -DCOMPILER_ID=GNU -DLANGUAGE=CXX -DMODE=EXIST
+# wxWidgets (Linux)
+wx-config --version
 
 # ffmpeg
 ffmpeg -version | head -1
