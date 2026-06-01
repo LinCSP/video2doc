@@ -19,6 +19,14 @@ echo "=== Collect ==="
 mkdir -p "$DIST_DIR"
 cp "$BUILD_DIR/bin/Video2Doc.exe" "$DIST_DIR/"
 
+# Дополнительные файлы для пользователя
+if [ -f "/src/install-deps.bat" ]; then
+    cp "/src/install-deps.bat" "$DIST_DIR/" && echo "Copied install-deps.bat"
+fi
+if [ -f "/src/requirements.txt" ]; then
+    cp "/src/requirements.txt" "$DIST_DIR/" && echo "Copied requirements.txt"
+fi
+
 # MinGW runtime DLL — спрашиваем у используемого компилятора, где лежат его DLL
 for dll in libgcc_s_seh-1 libstdc++-6 libwinpthread-1; do
     src=$(x86_64-w64-mingw32-g++ -print-file-name="${dll}.dll")
