@@ -141,8 +141,8 @@ jobs:
           path: Video2Doc-*.tar.gz
           if-no-files-found: error
 
-  windows:
-    name: Windows zip (MinGW cross-compile, x64)
+  windows-build:
+    name: Windows binary (MinGW cross-compile, x64)
     runs-on: ubuntu-latest
 
     steps:
@@ -153,23 +153,50 @@ jobs:
           cd docker
           ./build-win.sh "${{ github.workspace }}"
 
-      - name: Rename artifact with version
-        run: |
-          cd docker/output
-          for f in Video2Doc-win64-*.zip; do
-            mv "$f" "Video2Doc-${{ github.ref_name }}-win64.zip"
-          done
-
-      - name: Upload artifact
+      - name: Upload zip artifact
         uses: actions/upload-artifact@v4
         with:
-          name: windows-release
-          path: docker/output/Video2Doc-*.zip
+          name: windows-zip
+          path: docker/output/Video2Doc-win64-*.zip
+          if-no-files-found: error
+
+  windows-installer:
+    name: Windows installer (Inno Setup, x64)
+    runs-on: windows-latest
+    needs: windows-build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Windows zip
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-zip
+          path: windows-zip
+
+      - name: Extract to deploy\
+        run: |
+          New-Item -ItemType Directory -Path deploy -Force | Out-Null
+          $zip = Get-ChildItem "windows-zip\*.zip" | Select-Object -First 1
+          Expand-Archive -Path $zip.FullName -DestinationPath deploy -Force
+          Write-Host "deploy\ contents:"
+          Get-ChildItem deploy\ | ForEach-Object { Write-Host "  $($_.Name)" }
+
+      - name: Create installer with Inno Setup
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart('v')
+          ISCC.exe /O. /DMyAppVersion=$version packaging\inno\video2doc.iss
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: Video2Doc-*-windows-x64.exe
           if-no-files-found: error
 
   publish:
     name: Publish Release
-    needs: [linux-ubuntu, linux-arch, linux-fedora, macos, windows]
+    needs: [linux-ubuntu, linux-arch, linux-fedora, macos, windows-installer]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -194,7 +221,7 @@ jobs:
 
           # Collect artifacts
           FILES=()
-          for f in dist/*.tar.gz dist/*.zip dist/*.rpm; do
+          for f in dist/*.tar.gz dist/*.zip dist/*.rpm dist/*.exe; do
             [ -f "$f" ] && FILES+=("$f")
           done
           echo "Uploading: ${FILES[*]}"
