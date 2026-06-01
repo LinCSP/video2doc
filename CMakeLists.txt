@@ -65,3 +65,12 @@ endif()
 
 # Install
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
+
+# CPack packaging
+set(CPACK_PACKAGE_NAME "Video2Doc")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Generate documentation from video using AI")
+set(CPACK_PACKAGE_VENDOR "LinCSP")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/LinCSP/video2doc")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+include(CPack)

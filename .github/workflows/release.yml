@@ -40,9 +40,16 @@ jobs:
           cp build/bin/Video2Doc AppDir/usr/bin/
           cp packaging/appimage/video2doc.desktop AppDir/
 
+          # Convert SVG icon to PNG for linuxdeploy
+          sudo apt-get install -y librsvg2-bin
+          rsvg-convert -w 256 -h 256 \
+            packaging/appimage/video2doc.svg \
+            -o packaging/appimage/video2doc.png
+
           ./linuxdeploy-x86_64.AppImage \
             --appdir AppDir \
             --desktop-file packaging/appimage/video2doc.desktop \
+            --icon-file packaging/appimage/video2doc.png \
             --output appimage
 
       - name: Upload AppImage artifact

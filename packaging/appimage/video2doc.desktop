@@ -2,6 +2,7 @@
 Name=Video2Doc
 Comment=Generate documentation from video using AI
 Exec=Video2Doc
+Icon=video2doc
 Type=Application
 Categories=AudioVideo;Utility;
 Terminal=false
