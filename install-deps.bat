@@ -1,9 +1,8 @@
 @echo off
-chcp 65001 >nul
 setlocal EnableDelayedExpansion
 
 echo ========================================
-echo   Video2Doc — установка зависимостей
+echo   Video2Doc - Dependency Installer
 echo ========================================
 echo.
 
@@ -11,63 +10,61 @@ set "SCRIPT_DIR=%~dp0"
 set "REQ_FILE=%SCRIPT_DIR%requirements.txt"
 set "MISSING=0"
 
-REM --- Проверка git ---
-echo [1/5] Проверка git...
+REM --- Check git ---
+echo [1/5] Checking git...
 git --version >nul 2>&1
 if errorlevel 1 (
-    echo   ⚠ git НЕ НАЙДЕН (необязательно)
-    echo   git нужен только для клонирования репозиториев.
-    echo   Скачайте с https://git-scm.com/download/win если нужен.
+    echo   ! git not found (optional)
+    echo     git is only needed for cloning repositories.
+    echo     Download from https://git-scm.com/download/win if needed.
 ) else (
-    for /f "tokens=*" %%a in ('git --version 2^>^&1') do echo   ✓ %%a
+    for /f "tokens=*" %%a in ('git --version 2^>^&1') do echo   + %%a
 )
 echo.
 
-REM --- Проверка Python ---
-echo [2/5] Проверка Python...
+REM --- Check Python ---
+echo [2/5] Checking Python...
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo   ✗ Python НЕ НАЙДЕН
+    echo   - Python NOT FOUND
     echo.
-    echo   Скачайте и установите Python 3.10+ с сайта:
+    echo   Download and install Python 3.10+ from:
     echo   https://www.python.org/downloads/
     echo.
-    echo   ☑ Важно: при установке поставьте галочку
-    echo      "Add Python to PATH"
+    echo   IMPORTANT: Check "Add Python to PATH" during installation.
     echo.
     set "MISSING=1"
 ) else (
-    for /f "tokens=*" %%a in ('python --version 2^>^&1') do echo   ✓ %%a
+    for /f "tokens=*" %%a in ('python --version 2^>^&1') do echo   + %%a
 )
 
-REM --- Проверка pip ---
-echo [3/5] Проверка pip...
+REM --- Check pip ---
+echo [3/5] Checking pip...
 pip --version >nul 2>&1
 if errorlevel 1 (
-    echo   ✗ pip НЕ НАЙДЕН
-    echo   Убедитесь, что Python установлен корректно.
+    echo   - pip NOT FOUND
+    echo     Make sure Python is installed correctly.
     set "MISSING=1"
 ) else (
-    for /f "tokens=*" %%a in ('pip --version 2^>^&1') do echo   ✓ %%a
+    for /f "tokens=*" %%a in ('pip --version 2^>^&1') do echo   + %%a
 )
 
-REM --- Проверка ffmpeg ---
-echo [4/5] Проверка ffmpeg...
+REM --- Check ffmpeg ---
+echo [4/5] Checking ffmpeg...
 ffmpeg -version >nul 2>&1
 if errorlevel 1 (
-    echo   ✗ ffmpeg НЕ НАЙДЕН
+    echo   - ffmpeg NOT FOUND
     echo.
-    echo   Скачайте ffmpeg с сайта:
+    echo   Download ffmpeg from:
     echo   https://ffmpeg.org/download.html#build-windows
     echo.
-    echo   Распакуйте архив и добавьте папку bin\ в переменную
-    echo   окружения PATH, либо положите ffmpeg.exe рядом
-    echo   с программой.
+    echo   Extract the archive and add the bin\ folder to PATH,
+    echo   or place ffmpeg.exe next to this program.
     echo.
     set "MISSING=1"
 ) else (
     for /f "tokens=*" %%a in ('ffmpeg -version 2^>^&1') do (
-        echo   ✓ %%a
+        echo   + %%a
         goto :ffmpeg_done
     )
 )
@@ -76,40 +73,39 @@ if errorlevel 1 (
 if "%MISSING%"=="1" (
     echo.
     echo ========================================
-    echo   Установите недостающие программы
-    echo   и запустите этот скрипт снова.
+    echo   Please install missing programs above
+    echo   and run this script again.
     echo ========================================
     pause
     exit /b 1
 )
 
-REM --- Установка Python-пакетов ---
-echo [5/5] Установка Python-пакетов (faster-whisper, kimi-cli)...
+REM --- Install Python packages ---
+echo [5/5] Installing Python packages (faster-whisper, kimi-cli)...
 if exist "%REQ_FILE%" (
     pip install -r "%REQ_FILE%"
 ) else (
-    echo   Файл requirements.txt не найден, ставим напрямую...
+    echo   requirements.txt not found, installing directly...
     pip install faster-whisper kimi-cli
 )
 
 if errorlevel 1 (
-    echo   ✗ Ошибка установки Python-пакетов
+    echo   - Failed to install Python packages
     pause
     exit /b 1
 )
 
-echo   ✓ Python-пакеты установлены
+echo   + Python packages installed
 echo.
 
-REM --- Итоговая проверка ---
 echo ========================================
-echo   Все зависимости установлены!
+echo   All dependencies are ready!
 echo ========================================
 echo.
-echo Для сборки проекта установите MSYS2 и выполните:
+echo To build from source, install MSYS2 and run:
 echo   pacman -S mingw-w64-ucrt-x86_64-gcc cmake ninja mingw-w64-ucrt-x86_64-wxwidgets3.2-msw
 echo.
-echo Либо воспользуйтесь Docker:
+echo Or use Docker:
 echo   cd docker
 echo   .\build-win.bat
 echo.
