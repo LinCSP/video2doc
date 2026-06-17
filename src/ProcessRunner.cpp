@@ -177,12 +177,13 @@ void ProcessRunner::OnTerminate(int pid, int status) {
     if (m_onDone) {
         // Defer callback to next event loop iteration to avoid
         // reentrancy issues when calling wxExecute from OnTerminate.
+        Callback onDone = m_onDone;
         if (m_log) {
-            m_log->GetEventHandler()->CallAfter([this, status]() {
-                m_onDone(status);
+            m_log->GetEventHandler()->CallAfter([onDone, status]() {
+                onDone(status);
             });
         } else {
-            m_onDone(status);
+            onDone(status);
         }
     }
     delete this;
