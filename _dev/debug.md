@@ -3,7 +3,7 @@ exec gdb \
     -ex "set print thread-events off" \
     -ex "set debuginfod enabled on" \
     -ex "run" \
-    --args ./linscp
+    --args ./Video2Doc
 ```
 
 set logging on
@@ -12,9 +12,8 @@ set logging off
 
 # Пересоздать тег
 
-git tag -d v0.1.0a1 && git push origin :v0.1.0a1
 
-git tag v0.1.0a1 && git push origin v0.1.0a1
+git tag v1.0.1 && git push origin git tag v1.0.1
 
 # Создать тег с аннотацией
 
